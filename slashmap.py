@@ -1,6 +1,9 @@
+#! python2.5
+# -*- coding: utf-8 -*-
+
 import os
 import ConfigParser
-import MySQLdb
+import oursql
 
 class SlashMap(object):
   """Maps a directory into the templates or blocks table of a Slash install
@@ -24,12 +27,12 @@ class SlashMap(object):
 
   def extract_records(self):
     """Write the mapping object's content to the filesystem"""
-    conn = MySQLdb.connect( host = self.host,
+    conn = oursql.connect( host = self.host,
                             user = self.user,
                             passwd = self.password,
                             db = self.database)
     cur = conn.cursor()
-    cur.execute("SELECT * FROM %s" % self.table) # all rows by default
+    cur.execute("SELECT * FROM `%s`" % self.table) # all rows by default
     # a pause to reflect: all rows by default, careful with big tables!
     # http://stackoverflow.com/questions/337479/how-to-get-a-row-by-row-mysql-resultset-in-python
     rows = cur.fetchall()
@@ -58,7 +61,7 @@ class SlashMap(object):
     
   def update_record(files):
     """Given a list of filepaths, write their contents to the database"""
-    conn = MySQLdb.connect( host = self.host,
+    conn = oursql.connect( host = self.host,
                             user = self.user,
                             passwd = self.password,
                             db = self.database)
@@ -72,8 +75,8 @@ class SlashMap(object):
       except IOError:
         raise Exception("Ojo, no puedo leer el archivo en cuestión")
       pattern = self.path_to_recordpattern(filepath)
-      query = make_sql_query("UPDATE", self.table, self.field, pattern, html) 
-      cur.execute(query)
+      updatequery = make_sql_query("UPDATE", self.table, self.field, pattern) 
+      cur.execute(updatequery, html)
     conn.close()
        
   def path_to_recordpattern(self, path):
@@ -83,13 +86,13 @@ class SlashMap(object):
       raise Exception('Something wrong with the db2fs mapping')
     return zip(self.scheme, values)
 
-  def make_sql_query(action, table, field, recordpattern, payload=None):
+  def make_sql_query(action, table, field, recordpattern):
     """Given the data, make a string with a sql query in it"""
     if action == "EXTRACT":
-      what = "SELECT %s FROM %s" % (field, table)
+      what = "SELECT `%s` FROM `%s`" % (field, table)
     elif action == "UPDATE":
-      what = "UPDATE %s SET %s='%s'" % (table, field, payload)
-    where = " AND ".join(["%s='%s'" % fvpair for fvpair in recordpattern]) +";"
+      what = "UPDATE `%s` SET `%s` = ?" % (table, field)
+    where = " AND ".join(["`%s`='%s'" % fvpair for fvpair in recordpattern]) +";"
     return what + " WHERE " + where
       
 def path_to_values(filepath):
