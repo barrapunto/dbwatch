@@ -48,16 +48,16 @@ class SlashMap(object):
 
   def write_file(self, dbrecord, payload):
     """Given data from a row off the db, write the corresponding file"""
-    filepath = '/'.join(dbrecord)+".html"
+    filepath = os.join(dbrecord)+".html"
     fullfilepath = os.path.join(self.dir, filepath)
     dirname, filename = os.path.split(fullfilepath)
     try:
       os.makedirs(dirname) # like os.makedir, but creates intermediate dirs
     except OSError:
       pass                 # we don't mind that directories may already exist
-    f = open(fullfilepath, 'w')
-    f.write(payload)
-    f.close()
+    with open(fullfilepath, 'w') as f:
+      f.write(payload)
+      f.close()
     
   def update_record(files):
     """Given a list of filepaths, write their contents to the database"""
@@ -80,7 +80,18 @@ class SlashMap(object):
     conn.close()
        
   def path_to_recordpattern(self, path):
-    """Given a path, return a pattern -- a series of field/value pairs"""
+  """
+  Returns a string with a sql query in it, acting upon 'table' and
+  column 'field'.
+
+  recordpattern is a sequence of pairs ("column", "value") that will
+  be used as a filter (column1 = value AND column2 = value AND ...)
+  
+  If action is 'UPDATE' then the query will be an UPDATE too, and
+  'field' will be set with the mysql interpolation variable "?".
+
+  If action is 'EXTRACT', the query will be a SELECT.
+  """ 
     values = path_to_values(path)
     if len(values) != len(self.scheme):
       raise Exception('Something wrong with the db2fs mapping')
@@ -92,6 +103,7 @@ class SlashMap(object):
       what = "SELECT `%s` FROM `%s`" % (field, table)
     elif action == "UPDATE":
       what = "UPDATE `%s` SET `%s` = ?" % (table, field)
+
     where = " AND ".join(["`%s`='%s'" % fvpair for fvpair in recordpattern]) +";"
     return what + " WHERE " + where
       
