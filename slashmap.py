@@ -84,25 +84,25 @@ class SlashMap(object):
     conn.close()
        
   def path_to_recordpattern(self, path):
-  """
-  Returns a string with a sql query in it, acting upon 'table' and
-  column 'field'.
-
-  recordpattern is a sequence of pairs ("column", "value") that will
-  be used as a filter (column1 = value AND column2 = value AND ...)
-  
-  If action is 'UPDATE' then the query will be an UPDATE too, and
-  'field' will be set with the mysql interpolation variable "?".
-
-  If action is 'EXTRACT', the query will be a SELECT.
-  """ 
+    """Given a path, return a pattern -- a series of field/value pairs"""
     values = path_to_values(path)
     if len(values) != len(self.scheme):
       raise Exception('Something wrong with the db2fs mapping')
     return zip(self.scheme, values)
 
   def make_sql_query(action, table, field, recordpattern):
-    """Given the data, make a string with a sql query in it"""
+    """
+    Returns a string with a sql query in it, acting upon 'table' and
+    column 'field'.
+
+    recordpattern is a sequence of pairs ("column", "value") that will
+    be used as a filter (column1 = value AND column2 = value AND ...)
+  
+    If action is 'UPDATE' then the query will be an UPDATE too, and
+    'field' will be set with the mysql interpolation variable "?".
+
+    If action is 'EXTRACT', the query will be a SELECT.
+    """ 
     if action == "EXTRACT":
       what = "SELECT `%s` FROM `%s`" % (field, table)
     elif action == "UPDATE":
