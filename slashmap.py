@@ -3,7 +3,11 @@
 
 import os
 import ConfigParser
-import oursql
+try:
+  import oursql as sql
+except ImportError:
+  import MySQLdb as sql
+  sql.paramstyle = 'qmark'
 
 class SlashMap(object):
   """Maps a directory into the templates or blocks table of a Slash install
@@ -27,7 +31,7 @@ class SlashMap(object):
 
   def extract_records(self):
     """Write the mapping object's content to the filesystem"""
-    conn = oursql.connect( host = self.host,
+    conn = sql.connect( host = self.host,
                             user = self.user,
                             passwd = self.password,
                             db = self.database)
@@ -61,15 +65,15 @@ class SlashMap(object):
     
   def update_record(files):
     """Given a list of filepaths, write their contents to the database"""
-    conn = oursql.connect( host = self.host,
+    conn = sql.connect( host = self.host,
                             user = self.user,
                             passwd = self.password,
                             db = self.database)
     cur = conn.cursor()
     
-    for file in files:
+    for filepath in files:
       try:
-        f = open(file, 'r')
+        f = open(filepath, 'r')
         f.read(html)
         f.close()
       except IOError:
