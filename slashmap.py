@@ -108,11 +108,13 @@ class SlashMap(object):
     elif action == "UPDATE":
       what = "UPDATE `%s` SET `%s` = ?" % (table, field)
 
-    where = " AND ".join(["`%s`='%s'" % fvpair for fvpair in recordpattern]) +";"
-    return what + " WHERE " + where
+    where = " AND ".join(["`%s`='%s'" % fvpair for fvpair in recordpattern])
+    return what + " WHERE " + where + ";"
       
 def path_to_values(filepath):
   """Make sure the filepath scheme is ok, and return a series of values"""
+  if filepath[0] == '/':           # also exception if len == 0, that's good!
+    filepath = filepath[1:]        # a leading "/" is always wrong, we fix it. 
   return filepath[:-6].split('/')
   
   
