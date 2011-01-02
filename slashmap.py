@@ -3,11 +3,8 @@
 
 import os
 import ConfigParser
-try:
-  import oursql as sql
-except ImportError:
-  import MySQLdb as sql
-  sql.paramstyle = 'qmark'
+
+import MySQLdb as sql
 
 class SlashMap(object):
   """Maps a directory into the templates or blocks table of a Slash install
@@ -28,8 +25,9 @@ class SlashMap(object):
     self.field = config.get("slashmap", "FIELD")
     self.scheme = path_to_values(config.get("slashmap", "SCHEME"))
     self.dir = directory
+    self.queue = []
 
-  def extract_records(self):
+  def extract_records(self, test=False):
     """Write the mapping object's content to the filesystem"""
     conn = sql.connect( host = self.host,
                             user = self.user,
@@ -45,77 +43,149 @@ class SlashMap(object):
     
     for row in rows:  
       data = dict(zip(labels, row))
-      payload = data['template']
+      payload = data[self.field]
       dbrecord = [data[label] for label in (self.scheme)]
-      self.write_file(dbrecord, payload)
-    return
+      if test:
+        self.write_file(dbrecord, payload, test=True)    
+        print os.path.join(*dbrecord)+".html is fine."
+      else:
+        self.write_file(dbrecord, payload)
 
-  def write_file(self, dbrecord, payload):
+  def write_file(self, dbrecord, payload, test=False):
     """Given data from a row off the db, write the corresponding file"""
-    filepath = os.join(dbrecord)+".html"
+    filepath = os.path.join(*dbrecord) + ".html"
     fullfilepath = os.path.join(self.dir, filepath)
-    dirname, filename = os.path.split(fullfilepath)
-    try:
-      os.makedirs(dirname) # like os.makedir, but creates intermediate dirs
-    except OSError:
-      pass                 # we don't mind that directories may already exist
-    with open(fullfilepath, 'w') as f:
-      f.write(payload)
-      f.close()
+    if payload is None:
+      payload = "NULL"
+    if test:
+      with open(fullfilepath, 'r') as f:
+        error = "Contents of file %s do not match its record" % fullfilepath,
+        assert payload == f.read(), error
+        f.close() 
+    else:
+      dirname, filename = os.path.split(fullfilepath)
+      try:
+        os.makedirs(dirname) # like os.makedir, but creates intermediate dirs
+      except OSError:
+        pass                 # we don't mind that directories may already exist
+      with open(fullfilepath, 'w') as f:
+        f.write(payload)
+        print "DB record written to %." % (fullfilepath,)
+        f.close()
+  
+  def update_db(self, files=None, test=False):
+    """Writes the contents of the queued files to the database"""
     
-  def update_record(files):
-    """Given a list of filepaths, write their contents to the database"""
+    if not files:
+      files = self.queue
+    
     conn = sql.connect( host = self.host,
                             user = self.user,
                             passwd = self.password,
                             db = self.database)
     cur = conn.cursor()
     
-    for filepath in files:
+    while files:
+      # for every file in the list
+      filepath = files.pop(0)
+      # we get the content off the file
       try:
         f = open(filepath, 'r')
-        f.read(html)
+        filedata = f.read()
+        if filedata == "NULL":
+          filedata = None
         f.close()
       except IOError:
-        raise Exception("Ojo, no puedo leer el archivo en cuestión")
-      pattern = self.path_to_recordpattern(filepath)
-      updatequery = make_sql_query("UPDATE", self.table, self.field, pattern) 
-      cur.execute(updatequery, html)
+        raise Exception("Ojo, no puedo leer el archivo %s" % filepath)
+
+      # we get the part of the filepath that maps to a given row in the table
+      relpath = os.path.relpath(filepath, self.dir)        
+      if test:
+        # we want to compare the row content with the file content
+        readquery = self.make_sql_query("EXTRACT", relpath)
+        cur.execute(readquery)        
+        rows = cur.fetchall()
+        rowserror = "No record associated with %s." % relpath
+        assert len(rows) > 0, rowserror
+        rowserror =  "More than one record associated with %s." % relpath
+        assert len(rows) < 2, rowserror        
+        labels = [x[0] for x in cur.description]
+        dbdata = dict(zip(labels, rows[0]))[self.field]
+        dbdataerror = "Discrepance in the data associated with %s." % relpath
+        assert dbdata == filedata, dbdataerror
+      else:
+        # or we update the content to the corresponding table row
+        updatequery = self.make_sql_query("UPDATE", relpath)
+        cur.execute(updatequery, filedata)
+        print "Change detected in %s, data uploaded to db." % (filepath,)
     conn.close()
        
-  def path_to_recordpattern(self, path):
+  def path_to_recordpattern(self, relpath):
     """Given a path, return a pattern -- a series of field/value pairs"""
-    values = path_to_values(path)
+    values = path_to_values(relpath)
     if len(values) != len(self.scheme):
       raise Exception('Something wrong with the db2fs mapping')
     return zip(self.scheme, values)
 
-  def make_sql_query(action, table, field, recordpattern):
+  def make_sql_query(self, action, relpath):
     """
     Returns a string with a sql query in it, acting upon 'table' and
     column 'field'.
 
-    recordpattern is a sequence of pairs ("column", "value") that will
-    be used as a filter (column1 = value AND column2 = value AND ...)
-  
+    Relpath is the file's path relative to the table's directory.
+      
     If action is 'UPDATE' then the query will be an UPDATE too, and
     'field' will be set with the mysql interpolation variable "?".
 
     If action is 'EXTRACT', the query will be a SELECT.
     """ 
+
+    field, table = self.field, self.table
+    
+    # "pattern" is a sequence of pairs ("column", "value") that will
+    # be used as a filter (column1 = value AND column2 = value AND ...)
+    pattern = self.path_to_recordpattern(relpath)
+    
     if action == "EXTRACT":
       what = "SELECT `%s` FROM `%s`" % (field, table)
     elif action == "UPDATE":
-      what = "UPDATE `%s` SET `%s` = ?" % (table, field)
+      what = "UPDATE `%s` SET `%s` = %s" % (table, field, "%s")
 
-    where = " AND ".join(["`%s`='%s'" % fvpair for fvpair in recordpattern])
+    where = " AND ".join(["`%s`='%s'" % fvpair for fvpair in pattern])
     return what + " WHERE " + where + ";"
-      
+    
+  def test(self):
+    """Compare the data in the filesystem with the data on the database.
+    All data on mapped files should be the same as the data on the database.
+    Also there should be no files without corresponding db row, or viceversa."""
+    # first we iterate over the records
+    self.extract_records(test=True)
+    # then we iterate over the files
+    allfiles = self.list_all_files()
+    self.update_db(files=allfiles, test=True)
+    
+  def list_all_files(self):
+    """Gets all *legal* mapped files. 
+    Raises exception if illegal files present or requred files not present."""
+    allfiles = []
+    for (dirpath, dirnames, filenames) in os.walk(self.dir):
+      if "manifest" in filenames:
+        assert dirpath == self.dir, "Manifest only allowed on rootdir."
+        filenames.remove("manifest")
+      if not (filenames or dirnames):
+        raise Exception, "You can't have empty leaf directories!"   
+      if (filenames and dirnames):                      
+        raise Exception, "You can't have files on non-leaf directories!"
+      if filenames:
+        fullfilenames = (os.path.join(dirpath, f) for f in filenames)
+        allfiles.extend(fullfilenames)
+    return allfiles
+    
 def path_to_values(filepath):
   """Make sure the filepath scheme is ok, and return a series of values"""
   if filepath[0] == '/':           # also exception if len == 0, that's good!
     filepath = filepath[1:]        # a leading "/" is always wrong, we fix it. 
-  return filepath[:-6].split('/')
-  
-  
+  schemestring = ".".join(filepath.split('.')[:-1])   # without file extension.
+  scheme = schemestring.split('/')
+  return scheme
   
