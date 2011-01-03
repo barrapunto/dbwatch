@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # Copyright  (C) 2011 by Javier Candeira
 
+from __future__ import with_statement
+
 import os
 import ConfigParser
 
