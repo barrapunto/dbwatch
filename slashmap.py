@@ -1,5 +1,6 @@
 #! python2.5
 # -*- coding: utf-8 -*-
+# Copyright  (C) 2011 by Javier Candeira
 
 import os
 import ConfigParser

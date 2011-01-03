@@ -1,0 +1,24 @@
+# This example manifest is for the html templates for the Slash CMS
+
+#These data are used both for the template extraction and update code.
+#
+#The scheme establishes a filesystem structure based on fields in the database
+#records. 
+#
+#skin/page/name.html means the template with name "admin", page "menu" 
+#and skin "default" lives in the filesystem at 
+#$rootpath/default/menu/admin.html
+
+[slashmap]
+
+DATABASE = barrapunto_test
+DBHOST = localhost
+DBUSER = barrapunto
+DBPASSWORD = barrapunto
+
+TABLE = templates
+FIELD = template
+SCHEME = skin/page/name.html
+
+
+
