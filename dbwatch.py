@@ -8,7 +8,7 @@ import time
 import gamin
 from opster import command
 
-from slashmap import SlashMap
+from dbmap import DBMap
 
 
 def watch_dirs(inputdirs):
@@ -23,7 +23,7 @@ def watch_dirs(inputdirs):
   
   for inputdir in inputdirs:
     # establish correspondence between each root watched dir and its db table
-    mapping = SlashMap(inputdir)
+    mapping = DBMap(inputdir)
     mappings.append(mapping)
     
     # get all watched dirs (leaf dirs from inputdirs trees) in one place
@@ -56,7 +56,7 @@ def file_event(dirpath, mapping):
       print filepath + " is a dotfile, so ignoring it"
     elif event == 1 or event== 5 and fullpath in mapping.list_all_files():
       if os.path.isdir(fullpath):
-        raise Exception("No puedes crear un directorio nuevo en el slashmap")
+        raise Exception("No puedes crear un directorio nuevo en el DBMap")
       mapping.queue.append(fullpath)
     else:        
       # handle other events here: except on dangerous, ignore innocuous ones
@@ -66,19 +66,19 @@ def file_event(dirpath, mapping):
 def check_db(inputdirs):
   """Test whether the filesystem and the database have the same information."""
   for inputdir in inputdirs:
-    mapping = SlashMap(inputdir)
+    mapping = DBMap(inputdir)
     mapping.test()
   
 def extract_data(inputdirs):
   "Lay out the filesystem structure on the dirs and dump database data there."  
   for inputdir in inputdirs:
-    mapping = SlashMap(inputdir)
+    mapping = DBMap(inputdir)
     mapping.extract_records()
 
 opts = [('w', 'watch', True, 'Watch files in directories, update them to the db.'),
         ('t', 'test-only', False, 'Compare the data on the filesystem and the db'),
         ('e', 'extract', False, 'Dump the data from the db to the filesystem'),
-        ('d', 'daemon', False, 'Run as a daemon (for permanent running) -- TODO')]
+        ('d', 'diff', False, 'Diff between the files and the database -- TODO')]
 
 @command(options=opts, usage='%name [OPTIONS] [DIRECTORY ...]')
 def main(*directories, **opts):
@@ -93,7 +93,7 @@ Each directory mapping to a database table is configured in a manifest file.
     check_db(directories)
   elif opts['extract']:
     extract_data(directories)
-  elif opts['daemon']:
+  elif opts['diff']:
     pass # @@ TODO
   elif opts['watch']:
     check_db(directories)

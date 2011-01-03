@@ -7,7 +7,7 @@ import ConfigParser
 
 import MySQLdb as sql
 
-class SlashMap(object):
+class DBMap(object):
   """Maps a directory into the templates or blocks table of a Slash install
      If templates, the file skin/page/name.html maps to the attributes
      with the same name.
@@ -18,13 +18,13 @@ class SlashMap(object):
     manifest = os.path.join(directory, "manifest")
     config.readfp(open(manifest)) 
     # open manifest file, and, I guess, import everything in it
-    self.database = config.get("slashmap", "DATABASE")
-    self.host = config.get("slashmap", "DBHOST")
-    self.user = config.get("slashmap", "DBUSER")
-    self.password = config.get("slashmap", "DBPASSWORD")
-    self.table = config.get("slashmap", "TABLE")
-    self.field = config.get("slashmap", "FIELD")
-    self.scheme = path_to_values(config.get("slashmap", "SCHEME"))
+    self.database = config.get("dbmap", "DATABASE")
+    self.host = config.get("dbmap", "DBHOST")
+    self.user = config.get("dbmap", "DBUSER")
+    self.password = config.get("dbmap", "DBPASSWORD")
+    self.table = config.get("dbmap", "TABLE")
+    self.field = config.get("dbmap", "FIELD")
+    self.scheme = path_to_values(config.get("dbmap", "SCHEME"))
     self.dir = directory
     self.queue = []
 

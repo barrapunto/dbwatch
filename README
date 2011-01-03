@@ -1,7 +1,7 @@
-SLASHMAP/SLASHWATCH
+DBwatch - A file monitoring and filesystem-to-database mirroring one-shot.
 
-$ ./slashwatch.py -h
-slashwatch.py [OPTIONS] [DIRECTORY ...]
+$ ./dbwatch.py -h
+dbwatch.py [OPTIONS] [DIRECTORY ...]
 
 Monitors files on one or more directories and updates their changes 
 to a database.
@@ -18,28 +18,35 @@ options:
  -d --daemon     Run as a daemon (for permanent running) -- TODO
  -h --help       show help
 
-
 Files:
 -----
-- slashmap.py is a class for mapping a database column to a series of 
+- dbmap.py is a class for mapping a database column to a series of 
 files in the filesystem.
 
-- slashwatch.py is the main file for the module. It monitors the filesystem's directories, and updates the content of any modified file to the corresponding database row. 
+- dbwatch.py is the main file for the module. It monitors the filesystem's 
+directories, and updates the content of any modified file to the corresponding 
+database row. 
 
 The mapping between the filesystem and the database is done through "manifest"
 files in the watched directories. See "examples" directory.
 
 Why?
 ---
-This is useful for anyone who needs to keep a given database row in source 
-control. For example, the html for Slash's templates and blocks is stored
-in the database. With this tool I can edit the templates using a proper editor
-and have my edits be commited to the database instantly.
+dbwatch is useful for anyone who needs to keep a given column in a  database 
+table under source control. For example, the html for Slash's templates and 
+blocks is stored in the database. With this tool I can edit the templates 
+using a proper editor and have my edits be commited to the database instantly.
 
 Halfway through writing this utility I found there's a "Slash template-tool"
 that probably does 90% of what I need. However, this utility has other 
 advantages:
-- It's generic. If you need to version a database's column using scm, all you
-need is make a new directory, write a manifest, and point slashwatch at it.
+- It's generic. If you need to version a database table's column using some 
+form of source control management, all you need is make a new directory, write
+a manifest, and point slashwatch at it.
+- It's automatic. Template-tool is more akin to dbmap. I would still have 
+to have written dbwatch.
 - It's in Python. I don't know Perl very well.
 
+Copying:
+-------
+DBWatch is free software under the MIT/Expat license. See COPYING for details.

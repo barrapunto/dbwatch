@@ -9,7 +9,7 @@
 #and skin "default" lives in the filesystem at 
 #$rootpath/default/menu/admin.html
 
-[slashmap]
+[dbmap]
 
 DATABASE = barrapunto_test
 DBHOST = localhost
