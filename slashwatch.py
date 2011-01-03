@@ -47,17 +47,19 @@ def watch_dirs(inputdirs):
 def file_event(dirpath, mapping):  
   """Returns the function that updates the database on each event"""
   def queue_file(filepath, event, dirpath=dirpath, mapping=mapping):
-    # ignore first events, "exists" etc.
+    # ignore first events, "exists" etc. and also dotfiles
     # write dirpath as basepath, filepath as file path
     # con su mapping y todo, nano
-    if event == 1:                             # file has been written to for !!!
-      fullpath = os.path.join(dirpath, filepath)
+    fullpath = os.path.join(dirpath, filepath)
+    if filepath[0]==".":
+      print filepath + " is a dotfile, so ignoring it"
+    elif event == 1 or event== 5 and fullpath in mapping.list_all_files():
       if os.path.isdir(fullpath):
         raise Exception("No puedes crear un directorio nuevo en el slashmap")
       mapping.queue.append(fullpath)
     else:        
       # handle other events here: except on dangerous, ignore innocuous ones
-      pass
+      pass # @@TODO
   return queue_file
 
 def check_db(inputdirs):
@@ -72,7 +74,7 @@ def extract_data(inputdirs):
     mapping = SlashMap(inputdir)
     mapping.extract_records()
 
-opts = [('t', 'testonly', False, 'Compare the data on the filesystem and the db'),
+opts = [('t', 'test-only', False, 'Compare the data on the filesystem and the db'),
         ('e', 'extract', False, 'Dump the data from the db to the filesystem'),
         ('d', 'daemon', False, 'Run as a daemon (for permanent running)')]
 
@@ -84,12 +86,12 @@ to a database.
 Each directory mapping to a database table is configured in a manifest file.
 (See example manifest files for the blocks and templates tables for Slash)."""
 
-  if opts['testonly']:
+  if opts['test_only']:
     check_db(directories)
   elif opts['extract']:
     extract_data(directories)
   elif opts['daemon']:
-    pass # TODO
+    pass # @@ TODO
   else:
     check_db(directories)
     watch_dirs(directories)

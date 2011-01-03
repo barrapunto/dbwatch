@@ -70,7 +70,7 @@ class SlashMap(object):
         pass                 # we don't mind that directories may already exist
       with open(fullfilepath, 'w') as f:
         f.write(payload)
-        print "DB record written to %." % (fullfilepath,)
+        print "DB record written to %s." % (fullfilepath,)
         f.close()
   
   def update_db(self, files=None, test=False):
@@ -105,19 +105,21 @@ class SlashMap(object):
         readquery = self.make_sql_query("EXTRACT", relpath)
         cur.execute(readquery)        
         rows = cur.fetchall()
+        
         rowserror = "No record associated with %s." % relpath
         assert len(rows) > 0, rowserror
         rowserror =  "More than one record associated with %s." % relpath
         assert len(rows) < 2, rowserror        
+        
         labels = [x[0] for x in cur.description]
         dbdata = dict(zip(labels, rows[0]))[self.field]
         dbdataerror = "Discrepance in the data associated with %s." % relpath
         assert dbdata == filedata, dbdataerror
       else:
-        # or we update the content to the corresponding table row
+        # or we can just update the filecontent to the corresponding table row
         updatequery = self.make_sql_query("UPDATE", relpath)
         cur.execute(updatequery, filedata)
-        print "Change detected in %s, data uploaded to db." % (filepath,)
+        print "%s: Change detected, data uploaded to db." % (filepath,)
     conn.close()
        
   def path_to_recordpattern(self, relpath):
@@ -177,6 +179,7 @@ class SlashMap(object):
       if (filenames and dirnames):                      
         raise Exception, "You can't have files on non-leaf directories!"
       if filenames:
+        filenames = [f for f in filenames if not f[0]=="."]
         fullfilenames = (os.path.join(dirpath, f) for f in filenames)
         allfiles.extend(fullfilenames)
     return allfiles
