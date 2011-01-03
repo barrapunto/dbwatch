@@ -46,8 +46,7 @@ class SlashMap(object):
       payload = data[self.field]
       dbrecord = [data[label] for label in (self.scheme)]
       if test:
-        self.write_file(dbrecord, payload, test=True)    
-        print os.path.join(*dbrecord)+".html is fine."
+        self.write_file(dbrecord, payload, test=True)
       else:
         self.write_file(dbrecord, payload)
 
@@ -61,6 +60,7 @@ class SlashMap(object):
       with open(fullfilepath, 'r') as f:
         error = "Contents of file %s do not match its record" % fullfilepath,
         assert payload == f.read(), error
+        print fullfilepath + " matches its db record."
         f.close() 
     else:
       dirname, filename = os.path.split(fullfilepath)

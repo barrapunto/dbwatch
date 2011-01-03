@@ -74,9 +74,10 @@ def extract_data(inputdirs):
     mapping = SlashMap(inputdir)
     mapping.extract_records()
 
-opts = [('t', 'test-only', False, 'Compare the data on the filesystem and the db'),
+opts = [('w', 'watch', True, 'Watch files in directories, update them to the db.'),
+        ('t', 'test-only', False, 'Compare the data on the filesystem and the db'),
         ('e', 'extract', False, 'Dump the data from the db to the filesystem'),
-        ('d', 'daemon', False, 'Run as a daemon (for permanent running)')]
+        ('d', 'daemon', False, 'Run as a daemon (for permanent running) -- TODO')]
 
 @command(options=opts, usage='%name [OPTIONS] [DIRECTORY ...]')
 def main(*directories, **opts):
@@ -87,12 +88,13 @@ Each directory mapping to a database table is configured in a manifest file.
 (See example manifest files for the blocks and templates tables for Slash)."""
 
   if opts['test_only']:
+    directories = [os.path.abspath(d) for d in directories]
     check_db(directories)
   elif opts['extract']:
     extract_data(directories)
   elif opts['daemon']:
     pass # @@ TODO
-  else:
+  elif opts['watch']:
     check_db(directories)
     watch_dirs(directories)
 
