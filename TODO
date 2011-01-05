@@ -1,0 +1,2 @@
+- queue files to be written with a set, not a list, to avoid double writing to database
+- exclude certain files from list of dbmapped and dbwatched files
