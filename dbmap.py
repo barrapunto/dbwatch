@@ -33,7 +33,7 @@ class DBMap(object):
     self.field = config.get("dbmap", "FIELD")
     self.scheme = path_to_values(config.get("dbmap", "SCHEME"))
     self.dir = directory
-    self.queue = []
+    self.queue = set()
 
   def extract_records(self, test=False):
     """Write the mapping object's content to the filesystem"""
@@ -95,7 +95,7 @@ class DBMap(object):
     
     while files:
       # for every file in the list
-      filepath = files.pop(0)
+      filepath = files.pop()
       # we get the content off the file
       try:
         f = open(filepath, 'r')
@@ -171,7 +171,7 @@ class DBMap(object):
     # first we iterate over the records
     self.extract_records(test=True)
     # then we iterate over the files
-    allfiles = self.list_all_files()
+    allfiles = set(self.list_all_files())
     self.update_db(files=allfiles, test=True)
     
   def list_all_files(self):

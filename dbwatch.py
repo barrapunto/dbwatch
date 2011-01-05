@@ -57,7 +57,7 @@ def file_event(dirpath, mapping):
     elif event == 1 or event== 5 and fullpath in mapping.list_all_files():
       if os.path.isdir(fullpath):
         raise Exception("No puedes crear un directorio nuevo en el DBMap")
-      mapping.queue.append(fullpath)
+      mapping.queue.add(fullpath)
     else:        
       # handle other events here: except on dangerous, ignore innocuous ones
       pass # @@TODO

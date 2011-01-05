@@ -1,2 +1,10 @@
-- queue files to be written with a set, not a list, to avoid double writing to database
-- exclude certain files from list of dbmapped and dbwatched files
+- test that set solution to queue avoids double writing
+- exclude certain files from list of extracted dbmapped and dbwatched files:
+#       modified:   templates/default/misc/metakeywordsd.html
+#       modified:   templates/default/misc/motd.html
+#       modified:   templates/default/misc/recentTopics.html
+
+
+Done:
+
+# queue files to be written with a set, not a list, to avoid double writing to database
