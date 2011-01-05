@@ -5,6 +5,11 @@
 from __future__ import with_statement
 
 import os
+try:
+  from os.path import relpath as filerelpath
+except ImportError:
+  from myutils import relpath as filerelpath
+
 import ConfigParser
 
 import MySQLdb as sql
@@ -102,7 +107,7 @@ class DBMap(object):
         raise Exception("Ojo, no puedo leer el archivo %s" % filepath)
 
       # we get the part of the filepath that maps to a given row in the table
-      relpath = os.path.relpath(filepath, self.dir)        
+      relpath = filerelpath(filepath, self.dir)        
       if test:
         # we want to compare the row content with the file content
         readquery = self.make_sql_query("EXTRACT", relpath)
