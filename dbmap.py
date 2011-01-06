@@ -32,7 +32,8 @@ class DBMap(object):
     self.table = config.get("dbmap", "TABLE")
     self.field = config.get("dbmap", "FIELD")
     self.scheme = path_to_values(config.get("dbmap", "SCHEME"))
-    self.excluded = config.get("dbmap", "EXCLUDED").split("\n")
+    excluded = config.get("dbmap", "EXCLUDED").split("\n")
+    self.excluded = set(f for f in excluded if f)
     self.dir = directory
     self.queue = set()
 
@@ -183,7 +184,6 @@ class DBMap(object):
     Excluded files may exist on filesystem from earlier extract. We ignore them.
     Raises exception if illegal files present or requred files not present."""
     allfiles = []
-    fullexcluded = [os.path.join(self.dir, f) for f in self.excluded if f]
     for (dirpath, dirnames, filenames) in os.walk(self.dir):
       if "manifest" in filenames:
         assert dirpath == self.dir, "Manifest only allowed on rootdir."
@@ -194,10 +194,10 @@ class DBMap(object):
         raise Exception, "You can't have files on non-leaf directories!"
       if filenames:
         filenames = [f for f in filenames if not f[0]=="."]
-        fullfilenames = [os.path.join(dirpath, f) for f in filenames]
-        for f in fullexcluded:
-          fullfilenames.remove(f)
+        fullfilenames = (os.path.join(dirpath, f) for f in filenames)
         allfiles.extend(fullfilenames)
+    # remove excluded after building the list of all existing files
+    allfiles = set(allfiles).difference(self.excluded)
     return allfiles
     
 def path_to_values(filepath):
