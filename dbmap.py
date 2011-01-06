@@ -194,7 +194,7 @@ class DBMap(object):
         raise Exception, "You can't have files on non-leaf directories!"
       if filenames:
         filenames = [f for f in filenames if not f[0]=="."]
-        fullfilenames = (os.path.join(dirpath, f) for f in filenames)
+        fullfilenames = [os.path.join(dirpath, f) for f in filenames]
         for f in fullexcluded:
           fullfilenames.remove(f)
         allfiles.extend(fullfilenames)
