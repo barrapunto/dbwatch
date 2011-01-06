@@ -177,12 +177,13 @@ class DBMap(object):
     # then we iterate over the files
     allfiles = set(self.list_all_files())
     self.update_db(files=allfiles, test=True)
-    print self.excluded
     
   def list_all_files(self):
     """Gets all *legal* mapped files. 
+    Excluded files may exist on filesystem from earlier extract. We ignore them.
     Raises exception if illegal files present or requred files not present."""
     allfiles = []
+    fullexcluded = [os.path.join(self.dir, f) for f in self.excluded if f]
     for (dirpath, dirnames, filenames) in os.walk(self.dir):
       if "manifest" in filenames:
         assert dirpath == self.dir, "Manifest only allowed on rootdir."
@@ -194,6 +195,8 @@ class DBMap(object):
       if filenames:
         filenames = [f for f in filenames if not f[0]=="."]
         fullfilenames = (os.path.join(dirpath, f) for f in filenames)
+        for f in fullexcluded:
+          fullfilenames.remove(f)
         allfiles.extend(fullfilenames)
     return allfiles
     
