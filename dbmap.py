@@ -32,9 +32,10 @@ class DBMap(object):
     self.table = config.get("dbmap", "TABLE")
     self.field = config.get("dbmap", "FIELD")
     self.scheme = path_to_values(config.get("dbmap", "SCHEME"))
+    self.dir = directory
+    
     excluded = config.get("dbmap", "EXCLUDED").split("\n")
     self.excluded = set(f for f in excluded if f)
-    self.dir = directory
     self.queue = set()
 
   def extract_records(self, test=False):
@@ -197,7 +198,9 @@ class DBMap(object):
         fullfilenames = (os.path.join(dirpath, f) for f in filenames)
         allfiles.extend(fullfilenames)
     # remove excluded after building the list of all existing files
-    allfiles = set(allfiles).difference(self.excluded)
+    fullexcluded = set(os.path.join(self.dir, f) for f in self.excluded)
+    allfiles = set(allfiles).difference(fullexcluded)
+    print self.excluded, fullexcluded
     return allfiles
     
 def path_to_values(filepath):
