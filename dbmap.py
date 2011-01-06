@@ -32,6 +32,7 @@ class DBMap(object):
     self.table = config.get("dbmap", "TABLE")
     self.field = config.get("dbmap", "FIELD")
     self.scheme = path_to_values(config.get("dbmap", "SCHEME"))
+    self.excluded = config.get("dbmap", "EXCLUDED").split("\n")
     self.dir = directory
     self.queue = set()
 
@@ -61,6 +62,9 @@ class DBMap(object):
   def write_file(self, dbrecord, payload, test=False):
     """Given data from a row off the db, write the corresponding file"""
     filepath = os.path.join(*dbrecord) + ".html"
+    if filepath in self.excluded:
+      print "* Not in the dbmap, listed as excluded: %s" % (filepath,)
+      return
     fullfilepath = os.path.join(self.dir, filepath)
     if payload is None:
       payload = "NULL"
@@ -173,6 +177,7 @@ class DBMap(object):
     # then we iterate over the files
     allfiles = set(self.list_all_files())
     self.update_db(files=allfiles, test=True)
+    print self.excluded
     
   def list_all_files(self):
     """Gets all *legal* mapped files. 

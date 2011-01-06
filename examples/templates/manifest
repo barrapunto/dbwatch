@@ -20,5 +20,10 @@ TABLE = templates
 FIELD = template
 SCHEME = skin/page/name.html
 
+# Multi-line list of excluded urlschemes, corresponding to the database rows
+# that we don't want mapped between DB and filesystem.
+# Can be empty.
 
-
+EXCLUDED = default/misc/metakeywordsd.html
+    default/misc/motd.html
+    default/misc/recentTopics.html

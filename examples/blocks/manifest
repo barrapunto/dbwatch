@@ -18,5 +18,10 @@ DBPASSWORD = barrapunto
 
 TABLE = blocks
 FIELD = block
-SCHEME = bid.html"
+SCHEME = bid.html
 
+# Multi-line list of excluded urlschemes, corresponding to the database rows
+# that we don't want mapped between DB and filesystem.
+# Can be empty.
+
+EXCLUDED =
