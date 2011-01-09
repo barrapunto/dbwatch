@@ -36,7 +36,6 @@ class DBMap(object):
     
     excluded = config.get("dbmap", "EXCLUDED").split("\n")
     self.excluded = set(f for f in excluded if f)
-    self.queue = set()
 
     self.connect()
 
@@ -91,11 +90,10 @@ class DBMap(object):
         print "DB record written to %s." % (fullfilepath,)
         f.close()
   
-  def update_db(self, files=None, test=False):
-    """Writes the contents of the queued files to the database"""
-    
-    if not files:
-      files = self.queue
+  def update_db(self, files, test=False):
+    """Writes the contents of a sequence of files to the database
+       If test == True, runs the tests.
+    """
     
     while files:
       # for every file in the list

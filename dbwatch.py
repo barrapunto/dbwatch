@@ -35,19 +35,15 @@ def watch_dirs(inputdirs):
   for subdir, mapping in watcheddirs.items():
     mon.watch_directory(subdir, file_event(subdir, mapping))
 
-  # every second we check for filesystem changes to upload to the db
+  # we check for filesystem changes to upload to the db
   while True:
-    time.sleep(1)
-    mon.handle_events()
-    # and if there are such changes, we upload them
-    for mapping in mappings:
-      if mapping.queue: 
-        mapping.update_db() 
+    mon.handle_one_event()
+    
 
 
 def file_event(dirpath, mapping):  
   """Returns the function that updates the database on each event"""
-  def queue_file(filepath, event, dirpath=dirpath, mapping=mapping):
+  def handle_file(filepath, event, dirpath=dirpath, mapping=mapping):
     # ignore first events, "exists" etc. and also dotfiles
     # write dirpath as basepath, filepath as file path
     # con su mapping y todo, nano
@@ -57,11 +53,11 @@ def file_event(dirpath, mapping):
     elif event == 1 or event== 5 and fullpath in mapping.list_all_files():
       if os.path.isdir(fullpath):
         raise Exception("No puedes crear un directorio nuevo en el DBMap")
-      mapping.queue.add(fullpath)
+      mapping.update_db(set((fullpath,)))
     else:        
       # handle other events here: except on dangerous, ignore innocuous ones
       pass # @@TODO
-  return queue_file
+  return handle_file
 
 def check_db(inputdirs):
   """Test whether the filesystem and the database have the same information."""
