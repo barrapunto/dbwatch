@@ -38,19 +38,23 @@ class DBMap(object):
     self.excluded = set(f for f in excluded if f)
     self.queue = set()
 
+    self.connect()
+
+  def connect(self):
+    self.conn = sql.connect( host = self.host,
+                             user = self.user,
+                             passwd = self.password,
+                             db = self.database)
+    self.cur = self.conn.cursor()
+
   def extract_records(self, test=False):
     """Write the mapping object's content to the filesystem"""
-    conn = sql.connect( host = self.host,
-                            user = self.user,
-                            passwd = self.password,
-                            db = self.database)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM `%s`" % self.table) # all rows by default
+
+    self.cur.execute("SELECT * FROM `%s`" % self.table) # all rows by default
     # a pause to reflect: all rows by default, careful with big tables!
     # http://stackoverflow.com/questions/337479/how-to-get-a-row-by-row-mysql-resultset-in-python
-    rows = cur.fetchall()
-    labels = [x[0] for x in cur.description]
-    conn.close()
+    rows = self.cur.fetchall()
+    labels = [x[0] for x in self.cur.description]
     
     for row in rows:  
       data = dict(zip(labels, row))
@@ -93,12 +97,6 @@ class DBMap(object):
     if not files:
       files = self.queue
     
-    conn = sql.connect( host = self.host,
-                            user = self.user,
-                            passwd = self.password,
-                            db = self.database)
-    cur = conn.cursor()
-    
     while files:
       # for every file in the list
       filepath = files.pop()
@@ -117,24 +115,23 @@ class DBMap(object):
       if test:
         # we want to compare the row content with the file content
         readquery = self.make_sql_query("EXTRACT", relpath)
-        cur.execute(readquery)        
-        rows = cur.fetchall()
+        self.cur.execute(readquery)        
+        rows = self.cur.fetchall()
         
         rowserror = "No record associated with %s." % relpath
         assert len(rows) > 0, rowserror
         rowserror =  "More than one record associated with %s." % relpath
         assert len(rows) < 2, rowserror        
         
-        labels = [x[0] for x in cur.description]
+        labels = [x[0] for x in self.cur.description]
         dbdata = dict(zip(labels, rows[0]))[self.field]
         dbdataerror = "Discrepance in the data associated with %s." % relpath
         assert dbdata == filedata, dbdataerror
       else:
         # or we can just update the filecontent to the corresponding table row
         updatequery = self.make_sql_query("UPDATE", relpath)
-        cur.execute(updatequery, filedata)
+        self.cur.execute(updatequery, filedata)
         print "%s: Change detected, data uploaded to db." % (filepath,)
-    conn.close()
        
   def path_to_recordpattern(self, relpath):
     """Given a path, return a pattern -- a series of field/value pairs"""
