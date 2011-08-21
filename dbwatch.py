@@ -5,7 +5,11 @@
 import os
 import time 
 
-import gamin
+try:
+  import gamin
+except ImportError:
+  print "For dbwatch to work you need to install gamin on your system"
+
 from opster import command
 
 from dbmap import DBMap
